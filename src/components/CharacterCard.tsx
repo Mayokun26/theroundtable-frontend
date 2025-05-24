@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { logger } from '../utils/logger';
 
 interface Character {
   id: string;
@@ -10,6 +11,28 @@ interface Character {
   traits: string[];
   imageUrl: string;
 }
+
+/**
+ * Loads and validates a character's image, with proper error handling
+ * @param {string} imageUrl - The URL of the character's image
+ * @param {string} characterName - The name of the character for error reporting
+ * @returns {Promise<HTMLImageElement>} - A promise that resolves to the loaded image
+ * @throws {Error} - If the image fails to load or validate
+ */
+const loadCharacterImage = async (imageUrl: string, characterName: string): Promise<HTMLImageElement> => {
+  try {
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error(`Failed to load image for ${characterName}`));
+      image.src = imageUrl;
+    });
+    return image;
+  } catch (error) {
+    console.error('Image loading failed', { characterName, imageUrl, error });
+    throw new Error(`Unable to load character image for ${characterName}`);
+  }
+};
 
 interface CharacterCardProps {
   character: Character;
