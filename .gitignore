@@ -1,0 +1,128 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS and Secrets
+.aws/
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+.env.local
+.env
+setup-aws.js
+aws-config.js
+**/aws-config.js
+setup-secrets.js
+credentials
+*.pem
+*.key
+
+# Installers and binaries
+*.msi
+*.exe
+*.zip
+*.tar.gz
+terraform.zip
+Redis-x64-3.2.100.msi
+nodejs_installer.msi
+
+# Logs and databases
+*.log
+*.sqlite
+
+# Temp files
+*.log
+*.tmp
+combined.log
+error.log
+
+# AI and Development tools
+.cursorrules
+scratchpad.md
+.github/copilot-instructions.md
+
+# GitHub specific
+.git/
+.github/workflows/*.local.yml
+
+# Build artifacts
+*.tsbuildinfo
+.cache/
+.npm/
+
+# Environment
+.env*
+!.env.example
+.env.*.local
+
+# Redis
+dump.rdb
+*.rdb
+
+# TypeScript
+**/*.js.map
+**/*.js
+!next.config.js
+!jest.config.js
+!.eslintrc.js
+
+# Project specific
+**/logs/
+**/test-api.js
+**/server.js.bak
+**/test-connections.ts
+combined.log
+error.log
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# IDE specific
+.settings/
+*.sublime-workspace
+*.sublime-project
+.history/
+
+# Test coverage
+.nyc_output/
+coverage/
+*.lcov
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+yarn-error.log
