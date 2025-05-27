@@ -1,17 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { Amplify, withSSRContext } from 'aws-amplify';
-
-// Configure Amplify (same configuration as in AuthProvider)
-Amplify.configure({
-  Auth: {
-    region: process.env.NEXT_PUBLIC_AWS_REGION,
-    userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
-    userPoolWebClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
-    mandatorySignIn: true,
-    authenticationFlowType: 'USER_SRP_AUTH'
-  }
-});
 
 // List of public paths that don't require authentication
 const publicPaths = [
@@ -32,21 +20,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  try {
-    // Get the SSR context
-    const SSR = withSSRContext({ req: request });
-    
-    // Try to get the current authenticated user
-    await SSR.Auth.currentAuthenticatedUser();
-    
-    // If we get here, the user is authenticated
-    return NextResponse.next();
-  } catch (error) {
+  // Check for authentication token in cookies
+  const authToken = request.cookies.get('auth-token');
+  
+  if (!authToken) {
     // User is not authenticated, redirect to login
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
+  
+  // If we get here, we have a token (validation will happen in the API)
+  return NextResponse.next();
 }
 
 export const config = {
