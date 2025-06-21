@@ -59,16 +59,26 @@ const ConversationPage: React.FC = () => {
     }
   ]);
   const [sendingMessage, setSendingMessage] = useState(false);
-
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        const response = await fetch('/api/characters');
-        if (!response.ok) {
-          throw new Error('Failed to fetch characters');
+        // Try to get pre-selected characters from URL query params
+        if (router.query.characters) {
+          const characterIds = Array.isArray(router.query.characters)
+            ? router.query.characters
+            : [router.query.characters];
+          setSelectedCharacters(characterIds);
         }
+        
+        // Fetch characters from API
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/characters`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch characters: ${response.statusText}`);
+        }
+        
         const data = await response.json();
-        setCharacters(Array.isArray(data) ? data : []);
+        const charactersArray = data.data || [];
+        setCharacters(charactersArray);
         setLoading(false);
       } catch (err) {
         setError('Error loading characters. Please try again later.');
@@ -78,7 +88,7 @@ const ConversationPage: React.FC = () => {
     };
 
     fetchCharacters();
-  }, []);
+  }, [router.query]);
 
   const handleCharacterSelect = (characterId: string) => {
     setSelectedCharacters(prev => {
@@ -109,7 +119,6 @@ const ConversationPage: React.FC = () => {
     ]);
     setError('');
   };
-
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || selectedCharacters.length === 0) return;
 
@@ -125,8 +134,8 @@ const ConversationPage: React.FC = () => {
     setSendingMessage(true);
 
     try {
-      // Send the message to the API
-      const response = await fetch('/api/conversations', {
+      // Send the message to our backend API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,36 +145,39 @@ const ConversationPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get responses');
+        throw new Error(`Failed to get responses: ${response.statusText}`);
       }
 
       const data = await response.json();
 
       // Add character responses to the conversation
-      if (data.responses && data.responses.length > 0) {
+      if (data.data && data.data.responses && data.data.responses.length > 0) {
         // Add a slight delay before showing responses to simulate thinking time
         setTimeout(() => {
-          data.responses.forEach((resp: any, index: number) => {
+          data.data.responses.forEach((resp: any) => {
             const characterResponse: Message = {
-              id: `character-${messages.length + index + 2}`,
+              id: resp.id || `character-${Date.now()}`,
               content: resp.content,
               sender: 'character',
-              character: { id: resp.id || selectedCharacters[index], name: resp.name },
-              timestamp: new Date().toISOString()
+              character: { 
+                id: resp.characterId, 
+                name: resp.name 
+              },
+              timestamp: resp.timestamp || new Date().toISOString()
             };
             setMessages(prev => [...prev, characterResponse]);
           });
           setSendingMessage(false);
         }, 1000);
       } else {
-        throw new Error('No responses received');
+        throw new Error('No responses received from API');
       }
     } catch (err) {
       console.error('Error sending message:', err);
       setMessages(prev => [
         ...prev,
         {
-          id: `system-error-${messages.length + 1}`,
+          id: `system-error-${Date.now()}`,
           content: 'Sorry, there was an error getting responses from the panel. Please try again.',
           sender: 'character',
           character: { id: 'system', name: 'System' },
