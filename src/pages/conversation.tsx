@@ -99,32 +99,48 @@ const ConversationPage: React.FC = () => {
       }
     });
   };
-
   const handleConfirmPanel = () => {
     if (selectedCharacters.length === 0) {
       setError('Please select at least one character for your panel.');
       return;
     }
 
-    setPanelConfirmed(true);
-    setMessages(prev => [
-      ...prev,
-      {
-        id: `system-${prev.length + 1}`,
-        content: 'Your panel is ready! Ask a question to start the conversation.',
-        sender: 'character',
-        character: { id: 'system', name: 'System' },
-        timestamp: new Date().toISOString()
+    try {
+      // Set panel as confirmed
+      setPanelConfirmed(true);
+      
+      // Clear any existing errors
+      setError('');
+      
+      // Add a confirmation message
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `system-${Date.now()}`,
+          content: 'Your panel is ready! Ask a question to start the conversation.',
+          sender: 'character',
+          character: { id: 'system', name: 'System' },
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      
+      // Log for debugging
+      console.log('Panel confirmed with characters:', selectedCharacters);
+    } catch (err) {
+      console.error('Error confirming panel:', err);
+      setError('There was an error setting up your panel. Please try again.');
+    }
+  };  const handleSendMessage = async (message: string) => {
+    if (!message.trim() || selectedCharacters.length === 0 || !panelConfirmed) {
+      if (!panelConfirmed) {
+        setError('Please confirm your panel before sending a message.');
       }
-    ]);
-    setError('');
-  };
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim() || selectedCharacters.length === 0) return;
+      return;
+    }
 
     // Add user message to the conversation
     const userMessage: Message = {
-      id: `user-${messages.length + 1}`,
+      id: `user-${Date.now()}`,
       content: message,
       sender: 'user',
       timestamp: new Date().toISOString()
@@ -132,48 +148,67 @@ const ConversationPage: React.FC = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setSendingMessage(true);
+    setError(''); // Clear any existing errors
 
     try {
-      // Send the message to our backend API
+      // Log request details for debugging
+      console.log(`Sending message to API: ${process.env.NEXT_PUBLIC_API_URL}/conversations`);
+      
+      // Send the message to our backend API with error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message,
           characters: selectedCharacters
         })
-      });
-
+      });      // Clear timeout regardless of response
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        throw new Error(`Failed to get responses: ${response.statusText}`);
+        throw new Error(`Failed to get responses: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('Response received:', data);
 
       // Add character responses to the conversation
       if (data.data && data.data.responses && data.data.responses.length > 0) {
         // Add a slight delay before showing responses to simulate thinking time
         setTimeout(() => {
-          data.data.responses.forEach((resp: any) => {
-            const characterResponse: Message = {
-              id: resp.id || `character-${Date.now()}`,
-              content: resp.content,
-              sender: 'character',
-              character: { 
-                id: resp.characterId, 
-                name: resp.name 
-              },
-              timestamp: resp.timestamp || new Date().toISOString()
-            };
-            setMessages(prev => [...prev, characterResponse]);
-          });
-          setSendingMessage(false);
+          // Process each response sequentially with a small delay between them
+          const addResponses = async () => {
+            for (const resp of data.data.responses) {
+              const characterResponse: Message = {
+                id: resp.id || `character-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                content: resp.content,
+                sender: 'character',
+                character: { 
+                  id: resp.characterId, 
+                  name: resp.name 
+                },
+                timestamp: resp.timestamp || new Date().toISOString()
+              };
+              
+              setMessages(prev => [...prev, characterResponse]);
+              // Small delay between character responses
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            setSendingMessage(false);
+          };
+          
+          addResponses();
         }, 1000);
       } else {
         throw new Error('No responses received from API');
       }
     } catch (err) {
       console.error('Error sending message:', err);
+      setSendingMessage(false);
       setMessages(prev => [
         ...prev,
         {
@@ -227,13 +262,19 @@ const ConversationPage: React.FC = () => {
                 Choose characters to join your conversation panel ({selectedCharacters.length} selected)
               </Typography>
               
-              <Box sx={{ mt: 2, mb: 3 }}>
-                <Button 
+              <Box sx={{ mt: 2, mb: 3 }}>                <Button 
                   variant="contained" 
                   color="primary"
-                  disabled={panelConfirmed}
+                  disabled={panelConfirmed || selectedCharacters.length === 0}
                   onClick={handleConfirmPanel}
                   fullWidth
+                  sx={{ 
+                    py: 1.5, 
+                    fontSize: '1rem',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    }
+                  }}
                 >
                   {panelConfirmed ? 'Panel Confirmed' : 'Confirm Panel'}
                 </Button>
