@@ -31,7 +31,7 @@ const CharacterGrid: React.FC<CharacterGridProps> = ({ characters = [] }) => {
   
   const characterList = React.useMemo(() => {
     if (characters.length === 0) {
-      // If no characters provided, render default characters
+      // If no characters provided, render default characters (limited to 3)
       return [
         {
           id: '1',
@@ -62,7 +62,8 @@ const CharacterGrid: React.FC<CharacterGridProps> = ({ characters = [] }) => {
         }
       ];
     }
-    return characters;
+    // Limit to only 3 characters
+    return characters.slice(0, 3);
   }, [characters]);
 
   const handleStartConversation = (characterId: string) => {

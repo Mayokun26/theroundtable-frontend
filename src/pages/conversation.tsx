@@ -20,6 +20,24 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ConversationPanel from '../components/ConversationPanel';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import conversationStyles from '@/styles/conversationStyles';
+// Dynamic import for the warmup utility to avoid server-side issues
+import dynamic from 'next/dynamic';
+
+// Load the warmup utility function directly (not as a component)
+const warmupLambda = async () => {
+  // Only import in client-side
+  if (typeof window !== 'undefined') {
+    try {
+      const module = await import('../utils/warmup-lambda');
+      return await module.warmupLambda();
+    } catch (err) {
+      console.error('Error importing warmup utility:', err);
+      return false;
+    }
+  }
+  return false;
+};
 
 interface Character {
   id: string;
@@ -42,7 +60,7 @@ interface Message {
   timestamp: string;
 }
 
-const ConversationPage: React.FC = () => {
+const ConversationPage: React.FC<{}> = () => {
   const router = useRouter();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
@@ -58,7 +76,37 @@ const ConversationPage: React.FC = () => {
       timestamp: new Date().toISOString()
     }
   ]);
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);  // State to track Lambda warmup status
+  const [lambdaWarmedUp, setLambdaWarmedUp] = useState(false);
+  
+  // Add a warmup effect to pre-warm the Lambda function
+  useEffect(() => {
+    // Warm up the Lambda function when the page loads
+    const warmupFunction = async () => {
+      try {
+        console.log('Warming up Lambda function...');
+        const success = await warmupLambda();
+        console.log('Lambda warmup completed, success:', success);
+        setLambdaWarmedUp(success);
+      } catch (err) {
+        console.error('Error warming up Lambda:', err);
+        setLambdaWarmedUp(false);
+      }
+    };
+    
+    warmupFunction();
+    
+    // Set a timer to retry warmup after 10 seconds if it failed or never completed
+    const retryTimer = setTimeout(() => {
+      if (!lambdaWarmedUp) {
+        console.log('Retrying Lambda warmup...');
+        warmupFunction();
+      }
+    }, 10000);
+    
+    return () => clearTimeout(retryTimer);
+  }, [lambdaWarmedUp]);
+
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
@@ -95,6 +143,12 @@ const ConversationPage: React.FC = () => {
       if (prev.includes(characterId)) {
         return prev.filter(id => id !== characterId);
       } else {
+        // Limit to a maximum of 3 characters
+        if (prev.length >= 3) {
+          // If already at 3 characters, show error
+          setError('Maximum of 3 characters allowed in your panel.');
+          return prev;
+        }
         return [...prev, characterId];
       }
     });
@@ -148,15 +202,34 @@ const ConversationPage: React.FC = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setSendingMessage(true);
-    setError(''); // Clear any existing errors
-
-    try {
+    setError(''); // Clear any existing errors    try {
       // Log request details for debugging
       console.log(`Sending message to API: ${process.env.NEXT_PUBLIC_API_URL}/conversations`);
+        // First try to warm up the Lambda if it's the first message
+      if (messages.filter(m => m.sender === 'user').length <= 1) {
+        try {
+          console.log('Warming up Lambda before first message...');
+          await warmupLambda();
+          // Small delay after warmup to ensure Lambda is ready
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+          console.log('Warmup attempt before sending message failed (non-critical):', err);
+        }
+      }
       
-      // Send the message to our backend API with error handling
+      // Send the message to our backend API with improved error handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout (increased from 10s)
+      
+      // Add a loading message first to improve user experience
+      const loadingMessage: Message = {
+        id: `system-loading-${Date.now()}`,
+        content: "Thinking...",
+        sender: 'character',
+        character: { id: 'system', name: 'System' },
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, loadingMessage]);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
@@ -166,11 +239,27 @@ const ConversationPage: React.FC = () => {
           message,
           characters: selectedCharacters
         })
-      });      // Clear timeout regardless of response
+      });
+      
+      // Clear timeout regardless of response
       clearTimeout(timeoutId);
       
+      // Remove the loading message
+      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id));
+      
       if (!response.ok) {
-        throw new Error(`Failed to get responses: ${response.status} ${response.statusText}`);
+        console.error(`API error: ${response.status} ${response.statusText}`);
+        
+        // Try to get more error details from the response
+        let errorDetails = '';
+        try {
+          const errorData = await response.json();
+          errorDetails = errorData.message || errorData.error || JSON.stringify(errorData);
+        } catch (e) {
+          // Ignore if we can't parse the error response
+        }
+        
+        throw new Error(`Failed to get responses: ${response.status} ${response.statusText}${errorDetails ? ` - ${errorDetails}` : ''}`);
       }
 
       const data = await response.json();
@@ -259,7 +348,7 @@ const ConversationPage: React.FC = () => {
               </Typography>
               {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
               <Typography variant="body2" gutterBottom color="text.secondary">
-                Choose characters to join your conversation panel ({selectedCharacters.length} selected)
+                Choose up to 3 characters to join your conversation panel ({selectedCharacters.length}/3 selected)
               </Typography>
               
               <Box sx={{ mt: 2, mb: 3 }}>                <Button 

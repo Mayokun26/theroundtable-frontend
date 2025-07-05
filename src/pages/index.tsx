@@ -77,37 +77,14 @@ export default function Home() {
           <Typography variant="h5" color="text.secondary" paragraph>
             Welcome to The Round Table, a platform for engaging discussions with historical figures.
           </Typography>
-          <Box mt={4}>            <Button 
+          <Box mt={4}>
+            <Button 
               variant="contained" 
               color="primary" 
               size="large" 
               onClick={handleStartConversation}
-              sx={{ mr: 2 }}
             >
               Start a Conversation
-            </Button>
-            <Button 
-              variant="outlined"
-              onClick={() => router.push('/about')}
-              sx={{ mr: 2 }}
-            >
-              About
-            </Button>
-            <Button
-              variant="outlined"
-              color={apiStatus === 'connected' ? 'success' : apiStatus === 'error' ? 'error' : 'primary'}
-              onClick={checkApiConnection}
-            >
-              {apiStatus === 'loading' ? (
-                <>
-                  <CircularProgress size={20} sx={{ mr: 1 }} />
-                  Checking API
-                </>
-              ) : apiStatus === 'connected' ? (
-                'API Connected'
-              ) : (
-                'API Error'
-              )}
             </Button>
           </Box>
         </Box>
