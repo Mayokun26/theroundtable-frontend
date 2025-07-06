@@ -60,7 +60,7 @@ interface Message {
   timestamp: string;
 }
 
-const ConversationPage: React.FC<{}> = () => {
+const ConversationPage = () => {
   const router = useRouter();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
@@ -202,7 +202,9 @@ const ConversationPage: React.FC<{}> = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setSendingMessage(true);
-    setError(''); // Clear any existing errors    try {
+    setError(''); // Clear any existing errors
+    
+    try {
       // Log request details for debugging
       console.log(`Sending message to API: ${process.env.NEXT_PUBLIC_API_URL}/conversations`);
         // First try to warm up the Lambda if it's the first message
