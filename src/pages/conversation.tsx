@@ -110,15 +110,7 @@ const ConversationPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [panelConfirmed, setPanelConfirmed] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'system-1',
-      content: 'Welcome to The Round Table. Select your panelists and confirm your chamber to begin.',
-      sender: 'character',
-      character: { id: 'system', name: 'System' },
-      timestamp: new Date().toISOString(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [lambdaWarmedUp, setLambdaWarmedUp] = useState(false);
   const availableCharacters = characters.length > 0 ? characters : fallbackCharacters;
@@ -197,16 +189,6 @@ const ConversationPage = () => {
     try {
       setPanelConfirmed(true);
       setError('');
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `system-${Date.now()}`,
-          content: 'Your panel is assembled. Present your question when ready.',
-          sender: 'character',
-          character: { id: 'system', name: 'System' },
-          timestamp: new Date().toISOString(),
-        },
-      ]);
     } catch (err) {
       console.error('Error confirming panel:', err);
       setError('There was an error setting up your panel. Please try again.');
@@ -298,7 +280,7 @@ const ConversationPage = () => {
           const addResponses = async () => {
             for (const resp of responses) {
               const characterResponse: Message = {
-                id: resp.id,
+                id: `msg-${resp.id}-${resp.timestamp}-${Math.random().toString(36).substring(2, 8)}`,
                 content: resp.content,
                 sender: 'character',
                 character: {
