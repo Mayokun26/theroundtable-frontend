@@ -67,6 +67,36 @@ interface Message {
   timestamp: string;
 }
 
+const fallbackCharacters: Character[] = [
+  {
+    id: '1',
+    name: 'Socrates',
+    category: 'Philosopher',
+    era: 'Ancient Greece',
+    description: 'Classical Greek philosopher credited as one of the founders of Western philosophy.',
+    traits: ['Wisdom', 'Ethics', 'Logic'],
+    imageUrl: '/images/socrates.jpg',
+  },
+  {
+    id: '2',
+    name: 'Marie Curie',
+    category: 'Scientist',
+    era: 'Modern Era',
+    description: 'Physicist and chemist who conducted pioneering research on radioactivity.',
+    traits: ['Scientific', 'Dedicated', 'Pioneering'],
+    imageUrl: '/images/marie-curie.jpg',
+  },
+  {
+    id: '3',
+    name: 'Sun Tzu',
+    category: 'Military Strategist',
+    era: 'Ancient China',
+    description: 'Chinese general, military strategist, writer, and philosopher known for "The Art of War".',
+    traits: ['Strategic', 'Disciplined', 'Philosophical'],
+    imageUrl: '/images/sun-tzu.jpg',
+  },
+];
+
 const ConversationPage = () => {
   const router = useRouter();
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -124,10 +154,12 @@ const ConversationPage = () => {
         }
 
         const data = await response.json();
-        setCharacters(data.data || []);
+        const loadedCharacters = Array.isArray(data.data) ? data.data : [];
+        setCharacters(loadedCharacters.length > 0 ? loadedCharacters : fallbackCharacters);
         setLoading(false);
       } catch (err) {
-        setError('Error loading characters. Please try again later.');
+        setError('Live panelists are unavailable. Showing sample panelists.');
+        setCharacters(fallbackCharacters);
         setLoading(false);
         console.error('Error fetching characters:', err);
       }
