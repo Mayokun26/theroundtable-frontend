@@ -238,15 +238,6 @@ const ConversationPage = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const loadingMessage: Message = {
-        id: `system-loading-${Date.now()}`,
-        content: 'Thinking...',
-        sender: 'character',
-        character: { id: 'system', name: 'System' },
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, loadingMessage]);
-
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,7 +249,6 @@ const ConversationPage = () => {
       });
 
       clearTimeout(timeoutId);
-      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id));
 
       if (!response.ok) {
         let errorDetails = '';
@@ -275,10 +265,16 @@ const ConversationPage = () => {
       }
 
       const data = await response.json();
-      if (data.data && data.data.responses && data.data.responses.length > 0) {
+      const responses = Array.isArray(data.responses)
+        ? data.responses
+        : Array.isArray(data.data?.responses)
+          ? data.data.responses
+          : [];
+
+      if (responses.length > 0) {
         setTimeout(() => {
           const addResponses = async () => {
-            for (const resp of data.data.responses) {
+            for (const resp of responses) {
               const characterResponse: Message = {
                 id: resp.id || `character-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 content: resp.content,
