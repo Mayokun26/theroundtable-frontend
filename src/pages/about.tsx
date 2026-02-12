@@ -59,10 +59,10 @@ export default function About() {
               <Typography paragraph>
                 The Round Table aims to make history and knowledge more accessible and engaging through interactive conversations. 
                 By leveraging advanced AI technology, we bring historical figures to life, allowing users to ask questions, 
-                explore ideas, and gain insights from some of history's most influential minds.
+                explore ideas, and gain insights from some of history&apos;s most influential minds.
               </Typography>
               <Typography paragraph>
-                Whether you're a student, educator, history enthusiast, or simply curious, our platform provides 
+                Whether you&apos;re a student, educator, history enthusiast, or simply curious, our platform provides 
                 an innovative way to connect with the past and learn from historical perspectives on contemporary issues.
               </Typography>
             </Paper>
@@ -130,7 +130,7 @@ export default function About() {
               <CardContent>
                 <Typography variant="h5" gutterBottom>Get Started</Typography>
                 <Typography paragraph>
-                  Ready to step back in time and engage with history's greatest minds?
+                  Ready to step back in time and engage with history&apos;s greatest minds?
                 </Typography>
                 <Button 
                   variant="contained" 

@@ -1,127 +1,132 @@
-// Site-wide theme customization
 import { createTheme } from '@mui/material/styles';
 
-// Custom color palette inspired by historical themes
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#8B4513', // SaddleBrown - rich, warm wood tone reminiscent of old libraries and scholars' desks
-      light: '#A0522D', // Sienna
-      dark: '#654321', // Dark brown
-      contrastText: '#F5F5DC', // Beige
+      main: '#6F4427',
+      light: '#8A5A39',
+      dark: '#50311C',
+      contrastText: '#FDF4E3',
     },
     secondary: {
-      main: '#4B0082', // Indigo - royal purple, symbolizing wisdom and nobility
-      light: '#9370DB', // Medium purple
-      dark: '#483D8B', // Dark slate blue
-      contrastText: '#FFF8DC', // Cornsilk
+      main: '#365245',
+      light: '#4C6D5D',
+      dark: '#23372E',
+      contrastText: '#F1F7F3',
     },
     background: {
-      default: '#FFF8E1', // Very light warm beige background, like parchment
-      paper: '#FFFAF0', // Floral white - slightly off-white for cards/panels
+      default: '#EFE2CB',
+      paper: '#FAF0DE',
     },
     text: {
-      primary: '#3E2723', // Very dark brown - easier to read than pure black
-      secondary: '#5D4037', // Brown - for secondary text
+      primary: '#2E2015',
+      secondary: '#5E4534',
     },
-    // Error/warning colors maintained for accessibility
     error: {
-      main: '#B71C1C', // Dark red
+      main: '#B3342E',
     },
     warning: {
-      main: '#E65100', // Dark orange
+      main: '#B5671C',
     },
     info: {
-      main: '#0D47A1', // Dark blue
+      main: '#335E77',
     },
     success: {
-      main: '#1B5E20', // Dark green
+      main: '#2D5A3D',
     },
   },
   typography: {
-    fontFamily: "'Crimson Text', 'Garamond', 'Times New Roman', serif",
+    fontFamily: "'Crimson Text', Georgia, serif",
     h1: {
       fontFamily: "'Cormorant Garamond', serif",
-      fontWeight: 600,
+      fontWeight: 700,
+      letterSpacing: 0.3,
     },
     h2: {
       fontFamily: "'Cormorant Garamond', serif",
-      fontWeight: 600,
+      fontWeight: 700,
     },
     h3: {
       fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 600,
     },
     h4: {
       fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 600,
     },
     h5: {
       fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 600,
     },
     h6: {
       fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 600,
+    },
+    body1: {
+      fontSize: '1.08rem',
+      lineHeight: 1.5,
     },
     button: {
-      fontWeight: 600,
-      letterSpacing: 1,
+      fontWeight: 700,
+      letterSpacing: 0.5,
+      textTransform: 'none',
     },
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          background:
+            'radial-gradient(circle at 20% 10%, rgba(255, 243, 217, 0.52), transparent 40%), radial-gradient(circle at 80% 90%, rgba(183, 147, 98, 0.2), transparent 38%), #efe2cb',
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          border: '1px solid rgba(139, 69, 19, 0.2)', // Subtle border
+          borderRadius: 14,
+          boxShadow: '0 10px 18px rgba(39, 25, 14, 0.12)',
+          border: '1px solid rgba(111, 68, 39, 0.2)',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 4,
-          padding: '8px 16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          textTransform: 'none',
+          borderRadius: 8,
+          padding: '10px 18px',
+          boxShadow: '0 4px 10px rgba(45, 29, 17, 0.14)',
           '&:hover': {
-            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+            boxShadow: '0 7px 15px rgba(45, 29, 17, 0.2)',
           },
         },
         containedPrimary: {
-          background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+          background: 'linear-gradient(135deg, #6F4427 0%, #8A5A39 100%)',
         },
         containedSecondary: {
-          background: 'linear-gradient(135deg, #4B0082 0%, #9370DB 100%)',
+          background: 'linear-gradient(135deg, #2F473C 0%, #4C6D5D 100%)',
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          background: 'linear-gradient(90deg, #654321 0%, #8B4513 100%)',
-          boxShadow: '0 2px 10px rgba(101, 67, 33, 0.4)',
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-              borderColor: 'rgba(139, 69, 19, 0.3)',
-              borderRadius: 4,
-            },
-            '&:hover fieldset': {
-              borderColor: 'rgba(139, 69, 19, 0.5)',
-            },
-          },
+          background: 'linear-gradient(90deg, #3F291A 0%, #654026 100%)',
+          boxShadow: '0 4px 14px rgba(46, 29, 17, 0.26)',
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundImage: 'none', // Remove default shadows
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
         },
       },
     },

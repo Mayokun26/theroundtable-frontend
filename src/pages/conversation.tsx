@@ -1,36 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Grid, 
-  Button, 
-  Card, 
-  CardContent, 
-  CardMedia, 
-  Checkbox, 
-  FormControlLabel,
-  CircularProgress,
+import React, { useEffect, useState } from 'react';
+import {
   Alert,
   AppBar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  Container,
+  Grid,
+  IconButton,
+  Stack,
   Toolbar,
-  IconButton
+  Typography,
 } from '@mui/material';
+import { keyframes } from '@mui/system';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ConversationPanel from '../components/ConversationPanel';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import conversationStyles from '@/styles/conversationStyles';
-// Dynamic import for the warmup utility to avoid server-side issues
-import dynamic from 'next/dynamic';
+import ConversationPanel from '../components/ConversationPanel';
 
-// Load the warmup utility function directly (not as a component)
 const warmupLambda = async () => {
-  // Only import in client-side
   if (typeof window !== 'undefined') {
     try {
-      const module = await import('../utils/warmup-lambda');
-      return await module.warmupLambda();
+      const warmupModule = await import('../utils/warmup-lambda');
+      return await warmupModule.warmupLambda();
     } catch (err) {
       console.error('Error importing warmup utility:', err);
       return false;
@@ -38,6 +34,17 @@ const warmupLambda = async () => {
   }
   return false;
 };
+
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 interface Character {
   id: string;
@@ -70,63 +77,54 @@ const ConversationPage = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'system-1',
-      content: 'Welcome to The Round Table! Select your panelists and click "Confirm Panel" to start a conversation.',
+      content: 'Welcome to The Round Table. Select your panelists and confirm your chamber to begin.',
       sender: 'character',
       character: { id: 'system', name: 'System' },
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   ]);
-  const [sendingMessage, setSendingMessage] = useState(false);  // State to track Lambda warmup status
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [lambdaWarmedUp, setLambdaWarmedUp] = useState(false);
-  
-  // Add a warmup effect to pre-warm the Lambda function
+
   useEffect(() => {
-    // Warm up the Lambda function when the page loads
     const warmupFunction = async () => {
       try {
-        console.log('Warming up Lambda function...');
         const success = await warmupLambda();
-        console.log('Lambda warmup completed, success:', success);
         setLambdaWarmedUp(success);
       } catch (err) {
         console.error('Error warming up Lambda:', err);
         setLambdaWarmedUp(false);
       }
     };
-    
+
     warmupFunction();
-    
-    // Set a timer to retry warmup after 10 seconds if it failed or never completed
+
     const retryTimer = setTimeout(() => {
       if (!lambdaWarmedUp) {
-        console.log('Retrying Lambda warmup...');
         warmupFunction();
       }
     }, 10000);
-    
+
     return () => clearTimeout(retryTimer);
   }, [lambdaWarmedUp]);
 
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        // Try to get pre-selected characters from URL query params
         if (router.query.characters) {
           const characterIds = Array.isArray(router.query.characters)
             ? router.query.characters
             : [router.query.characters];
           setSelectedCharacters(characterIds);
         }
-        
-        // Fetch characters from API
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/characters`);
         if (!response.ok) {
           throw new Error(`Failed to fetch characters: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
-        const charactersArray = data.data || [];
-        setCharacters(charactersArray);
+        setCharacters(data.data || []);
         setLoading(false);
       } catch (err) {
         setError('Error loading characters. Please try again later.');
@@ -139,20 +137,18 @@ const ConversationPage = () => {
   }, [router.query]);
 
   const handleCharacterSelect = (characterId: string) => {
-    setSelectedCharacters(prev => {
+    setSelectedCharacters((prev) => {
       if (prev.includes(characterId)) {
-        return prev.filter(id => id !== characterId);
-      } else {
-        // Limit to a maximum of 3 characters
-        if (prev.length >= 3) {
-          // If already at 3 characters, show error
-          setError('Maximum of 3 characters allowed in your panel.');
-          return prev;
-        }
-        return [...prev, characterId];
+        return prev.filter((id) => id !== characterId);
       }
+      if (prev.length >= 3) {
+        setError('Maximum of 3 characters allowed in your panel.');
+        return prev;
+      }
+      return [...prev, characterId];
     });
   };
+
   const handleConfirmPanel = () => {
     if (selectedCharacters.length === 0) {
       setError('Please select at least one character for your panel.');
@@ -160,31 +156,25 @@ const ConversationPage = () => {
     }
 
     try {
-      // Set panel as confirmed
       setPanelConfirmed(true);
-      
-      // Clear any existing errors
       setError('');
-      
-      // Add a confirmation message
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `system-${Date.now()}`,
-          content: 'Your panel is ready! Ask a question to start the conversation.',
+          content: 'Your panel is assembled. Present your question when ready.',
           sender: 'character',
           character: { id: 'system', name: 'System' },
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       ]);
-      
-      // Log for debugging
-      console.log('Panel confirmed with characters:', selectedCharacters);
     } catch (err) {
       console.error('Error confirming panel:', err);
       setError('There was an error setting up your panel. Please try again.');
     }
-  };  const handleSendMessage = async (message: string) => {
+  };
+
+  const handleSendMessage = async (message: string) => {
     if (!message.trim() || selectedCharacters.length === 0 || !panelConfirmed) {
       if (!panelConfirmed) {
         setError('Please confirm your panel before sending a message.');
@@ -192,106 +182,88 @@ const ConversationPage = () => {
       return;
     }
 
-    // Add user message to the conversation
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       content: message,
       sender: 'user',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setSendingMessage(true);
-    setError(''); // Clear any existing errors
-    
+    setError('');
+
     try {
-      // Log request details for debugging
-      console.log(`Sending message to API: ${process.env.NEXT_PUBLIC_API_URL}/conversations`);
-        // First try to warm up the Lambda if it's the first message
-      if (messages.filter(m => m.sender === 'user').length <= 1) {
+      if (messages.filter((m) => m.sender === 'user').length <= 1) {
         try {
-          console.log('Warming up Lambda before first message...');
           await warmupLambda();
-          // Small delay after warmup to ensure Lambda is ready
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         } catch (err) {
           console.log('Warmup attempt before sending message failed (non-critical):', err);
         }
       }
-      
-      // Send the message to our backend API with improved error handling
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout (increased from 10s)
-      
-      // Add a loading message first to improve user experience
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const loadingMessage: Message = {
         id: `system-loading-${Date.now()}`,
-        content: "Thinking...",
+        content: 'Thinking...',
         sender: 'character',
         character: { id: 'system', name: 'System' },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      setMessages(prev => [...prev, loadingMessage]);
-      
+      setMessages((prev) => [...prev, loadingMessage]);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
         body: JSON.stringify({
           message,
-          characters: selectedCharacters
-        })
+          characters: selectedCharacters,
+        }),
       });
-      
-      // Clear timeout regardless of response
+
       clearTimeout(timeoutId);
-      
-      // Remove the loading message
-      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id));
-      
+      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id));
+
       if (!response.ok) {
-        console.error(`API error: ${response.status} ${response.statusText}`);
-        
-        // Try to get more error details from the response
         let errorDetails = '';
         try {
           const errorData = await response.json();
           errorDetails = errorData.message || errorData.error || JSON.stringify(errorData);
-        } catch (e) {
-          // Ignore if we can't parse the error response
+        } catch {
+          // noop
         }
-        
-        throw new Error(`Failed to get responses: ${response.status} ${response.statusText}${errorDetails ? ` - ${errorDetails}` : ''}`);
+
+        throw new Error(
+          `Failed to get responses: ${response.status} ${response.statusText}${errorDetails ? ` - ${errorDetails}` : ''}`,
+        );
       }
 
       const data = await response.json();
-      console.log('Response received:', data);
-
-      // Add character responses to the conversation
       if (data.data && data.data.responses && data.data.responses.length > 0) {
-        // Add a slight delay before showing responses to simulate thinking time
         setTimeout(() => {
-          // Process each response sequentially with a small delay between them
           const addResponses = async () => {
             for (const resp of data.data.responses) {
               const characterResponse: Message = {
                 id: resp.id || `character-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 content: resp.content,
                 sender: 'character',
-                character: { 
-                  id: resp.characterId, 
-                  name: resp.name 
+                character: {
+                  id: resp.characterId,
+                  name: resp.name,
                 },
-                timestamp: resp.timestamp || new Date().toISOString()
+                timestamp: resp.timestamp || new Date().toISOString(),
               };
-              
-              setMessages(prev => [...prev, characterResponse]);
-              // Small delay between character responses
-              await new Promise(resolve => setTimeout(resolve, 500));
+
+              setMessages((prev) => [...prev, characterResponse]);
+              await new Promise((resolve) => setTimeout(resolve, 500));
             }
             setSendingMessage(false);
           };
-          
+
           addResponses();
         }, 1000);
       } else {
@@ -300,17 +272,16 @@ const ConversationPage = () => {
     } catch (err) {
       console.error('Error sending message:', err);
       setSendingMessage(false);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `system-error-${Date.now()}`,
           content: 'Sorry, there was an error getting responses from the panel. Please try again.',
           sender: 'character',
           character: { id: 'system', name: 'System' },
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       ]);
-      setSendingMessage(false);
     }
   };
 
@@ -326,93 +297,135 @@ const ConversationPage = () => {
     <>
       <Head>
         <title>Start a Conversation - The Round Table</title>
-        <meta name="description" content="Have a conversation with historical figures, legendary characters, and fictional personalities." />
+        <meta
+          name="description"
+          content="Assemble historical figures and host a focused, multi-voice roundtable conversation."
+        />
       </Head>
 
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => router.push('/')} aria-label="back">
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          borderBottom: '1px solid rgba(130, 89, 57, 0.28)',
+        }}
+      >
+        <Toolbar sx={{ py: { xs: 0.25, md: 0.5 } }}>
+          <IconButton edge="start" color="inherit" onClick={() => router.push('/')} aria-label="back" sx={{ mr: 1.2 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            The Round Table Conversation
+          <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontSize: { xs: '1.15rem', md: '1.5rem' } }}>
+            The Round Table Chamber
           </Typography>
+          <Chip
+            size="small"
+            label={panelConfirmed ? 'Panel Confirmed' : `${selectedCharacters.length}/3 Selected`}
+            color={panelConfirmed ? 'secondary' : 'default'}
+            sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
+              fontWeight: 700,
+              border: '1px solid rgba(255, 240, 212, 0.35)',
+              bgcolor: panelConfirmed ? 'rgba(64, 98, 82, 0.82)' : 'rgba(44, 29, 18, 0.32)',
+              color: '#f8ebd4',
+            }}
+          />
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
-        <Grid container spacing={3}>
-          {/* Left side - Character Selection */}
+      <Container maxWidth="xl" sx={{ mt: { xs: 2, md: 3 }, mb: { xs: 2.5, md: 3.5 } }}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12} md={4} lg={3}>
-            <Box sx={{ position: 'sticky', top: '20px' }}>
-              <Typography variant="h5" component="h2" gutterBottom>
-                Select Your Panel
+            <Box
+              sx={{
+                position: { xs: 'static', md: 'sticky' },
+                top: { md: '82px' },
+                borderRadius: 2.5,
+                p: { xs: 2, md: 2.5 },
+                background: 'linear-gradient(165deg, rgba(253, 245, 230, 0.92), rgba(244, 230, 206, 0.92))',
+                border: '1px solid rgba(112, 74, 43, 0.2)',
+                boxShadow: '0 10px 20px rgba(42, 27, 15, 0.12)',
+                animation: `${fadeInUp} 380ms ease-out both`,
+              }}
+            >
+              <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.5rem', md: '1.9rem' } }}>
+                Assemble Your Panel
+              </Typography>
+              <Typography variant="body2" gutterBottom color="text.secondary" sx={{ mb: 1.3 }}>
+                Choose up to three voices to join this session.
               </Typography>
               {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
-              <Typography variant="body2" gutterBottom color="text.secondary">
-                Choose up to 3 characters to join your conversation panel ({selectedCharacters.length}/3 selected)
-              </Typography>
-              
-              <Box sx={{ mt: 2, mb: 3 }}>                <Button 
-                  variant="contained" 
-                  color="primary"
-                  disabled={panelConfirmed || selectedCharacters.length === 0}
-                  onClick={handleConfirmPanel}
-                  fullWidth
-                  sx={{ 
-                    py: 1.5, 
-                    fontSize: '1rem',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    }
-                  }}
-                >
-                  {panelConfirmed ? 'Panel Confirmed' : 'Confirm Panel'}
-                </Button>
-              </Box>
-              
-              <Box sx={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto', pr: 1 }}>
-                {characters.map(character => (
-                  <Card 
-                    key={character.id} 
-                    sx={{ 
-                      mb: 2, 
-                      border: selectedCharacters.includes(character.id) ? 2 : 0,
-                      borderColor: 'primary.main',
-                      transition: 'all 0.2s',
+
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={panelConfirmed || selectedCharacters.length === 0}
+                onClick={handleConfirmPanel}
+                fullWidth
+                sx={{
+                  py: { xs: 1.2, md: 1.35 },
+                  mb: 2,
+                  fontSize: { xs: '0.95rem', md: '1rem' },
+                }}
+              >
+                {panelConfirmed ? 'Panel Confirmed' : 'Confirm Panel'}
+              </Button>
+
+              <Stack
+                spacing={1.2}
+                sx={{
+                  maxHeight: { xs: 'none', md: 'calc(100vh - 275px)' },
+                  overflowY: { xs: 'visible', md: 'auto' },
+                  pr: { xs: 0, md: 0.4 },
+                }}
+              >
+                {characters.map((character, index) => (
+                  <Card
+                    key={character.id}
+                    sx={{
+                      border: selectedCharacters.includes(character.id)
+                        ? '2px solid rgba(111, 68, 39, 0.8)'
+                        : '1px solid rgba(111, 68, 39, 0.18)',
+                      background: selectedCharacters.includes(character.id)
+                        ? 'linear-gradient(160deg, #fff7e8, #f3e4cb)'
+                        : 'linear-gradient(160deg, #fdf5e7, #f7ecd8)',
+                      transition: 'transform 200ms ease, box-shadow 200ms ease',
+                      animation: `${fadeInUp} 420ms ease both`,
+                      animationDelay: `${Math.min(index * 65, 420)}ms`,
                       '&:hover': {
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                      }
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 8px 18px rgba(51, 35, 23, 0.16)',
+                      },
                     }}
                   >
-                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <CardContent sx={{ p: { xs: 1.35, md: 1.6 }, '&:last-child': { pb: { xs: 1.35, md: 1.6 } } }}>
                       <Box display="flex" alignItems="center">
-                        <Box 
-                          component="img" 
-                          src={character.imageUrl || '/images/placeholder.jpg'} 
+                        <Box
+                          component="img"
+                          src={character.imageUrl || '/images/placeholder.jpg'}
                           alt={character.name}
-                          sx={{ 
-                            width: 60, 
-                            height: 60, 
+                          sx={{
+                            width: { xs: 50, md: 56 },
+                            height: { xs: 50, md: 56 },
                             borderRadius: '50%',
                             objectFit: 'cover',
-                            mr: 2
+                            mr: 1.3,
+                            border: '2px solid rgba(111, 68, 39, 0.25)',
                           }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = '/images/placeholder.jpg';
                           }}
                         />
-                        <Box>
-                          <Typography variant="h6" component="div" sx={{ fontSize: '1rem' }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="h6" component="div" sx={{ fontSize: { xs: '0.95rem', md: '1rem' }, lineHeight: 1.05 }}>
                             {character.name}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {character.era} • {character.category}
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.2 }}>
+                            {character.era} | {character.category}
                           </Typography>
                         </Box>
                         <Box sx={{ ml: 'auto' }}>
-                          <Checkbox 
+                          <Checkbox
                             checked={selectedCharacters.includes(character.id)}
                             onChange={() => handleCharacterSelect(character.id)}
                             disabled={panelConfirmed}
@@ -422,18 +435,19 @@ const ConversationPage = () => {
                     </CardContent>
                   </Card>
                 ))}
-              </Box>
+              </Stack>
             </Box>
           </Grid>
-          
-          {/* Right side - Conversation */}
+
           <Grid item xs={12} md={8} lg={9}>
-            <Box sx={{ height: 'calc(100vh - 120px)' }}>
-              <ConversationPanel 
-                messages={messages} 
-                onSendMessage={handleSendMessage} 
-                loading={sendingMessage}
-              />
+            <Box
+              sx={{
+                height: { xs: '72vh', sm: '74vh', md: 'calc(100vh - 160px)' },
+                minHeight: { xs: 480, md: 560 },
+                animation: `${fadeInUp} 420ms ease-out both`,
+              }}
+            >
+              <ConversationPanel messages={messages} onSendMessage={handleSendMessage} loading={sendingMessage} />
             </Box>
           </Grid>
         </Grid>
@@ -442,4 +456,4 @@ const ConversationPage = () => {
   );
 };
 
-export default ConversationPage; 
+export default ConversationPage;

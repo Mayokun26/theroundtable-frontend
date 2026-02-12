@@ -145,7 +145,7 @@ export default function ConfirmSignUp() {
 
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <Typography variant="body2">
-                Didn't receive the code?{' '}
+                Didn&apos;t receive the code?{' '}
                 <Link href="/resend-code" passHref>
                   <Typography
                     component="a"

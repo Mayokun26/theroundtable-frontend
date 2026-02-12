@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import MessageBubble from './MessageBubble';
 
@@ -23,17 +23,27 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(170deg, #fdf6ea 0%, #f3e6ce 100%);
+  border: 1px solid rgba(111, 68, 39, 0.24);
+  border-radius: 14px;
+  box-shadow: 0 12px 24px rgba(39, 25, 14, 0.14);
   overflow: hidden;
 `;
 
 const Header = styled.div`
-  background-color: #4285f4;
-  color: white;
-  padding: 16px;
-  font-weight: 600;
+  background: linear-gradient(90deg, #4d321f 0%, #71472a 100%);
+  color: #f7e7cb;
+  padding: 14px 18px;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  font-size: 1.25rem;
+  border-bottom: 1px solid rgba(255, 239, 211, 0.24);
+
+  @media (max-width: 700px) {
+    font-size: 1.05rem;
+    padding: 12px 14px;
+  }
 `;
 
 const MessagesContainer = styled.div`
@@ -42,63 +52,113 @@ const MessagesContainer = styled.div`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(180deg, rgba(251, 242, 223, 0.72) 0%, rgba(250, 239, 214, 0.86) 100%);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(111, 68, 39, 0.28);
+    border-radius: 8px;
+  }
+
+  @media (max-width: 700px) {
+    padding: 12px;
+  }
 `;
 
 const InputContainer = styled.div`
   display: flex;
   padding: 12px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(111, 68, 39, 0.2);
+  background: rgba(251, 240, 216, 0.9);
+
+  @media (max-width: 700px) {
+    padding: 10px;
+    gap: 8px;
+  }
 `;
 
 const Input = styled.input`
   flex: 1;
-  padding: 10px 16px;
-  border: 1px solid #e0e0e0;
+  padding: 11px 14px;
+  border: 1px solid rgba(111, 68, 39, 0.3);
+  background: rgba(255, 250, 240, 0.96);
   border-radius: 24px;
-  font-size: 1rem;
+  font-size: 0.98rem;
+  color: #3d2a1b;
   outline: none;
-  
+
+  &::placeholder {
+    color: #7b5f4b;
+  }
+
   &:focus {
-    border-color: #4285f4;
+    border-color: rgba(111, 68, 39, 0.6);
+    box-shadow: 0 0 0 2px rgba(111, 68, 39, 0.12);
+  }
+
+  @media (max-width: 700px) {
+    font-size: 0.95rem;
+    padding: 10px 12px;
   }
 `;
 
 const SendButton = styled.button<{ disabled: boolean }>`
-  margin-left: 12px;
-  padding: 10px 16px;
-  background-color: ${(props) => (props.disabled ? '#cccccc' : '#4285f4')};
-  color: white;
+  margin-left: 10px;
+  padding: 10px 14px;
+  background: ${(props) =>
+    props.disabled
+      ? 'linear-gradient(135deg, #ccbba2 0%, #c4b29a 100%)'
+      : 'linear-gradient(135deg, #6f4427 0%, #8a5a39 100%)'};
+  color: #f9ecd7;
   border: none;
-  border-radius: 24px;
-  font-size: 1rem;
+  border-radius: 22px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
-  transition: background-color 0.3s ease;
-  
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
   &:hover {
-    background-color: ${(props) => (props.disabled ? '#cccccc' : '#3367d6')};
+    transform: ${(props) => (props.disabled ? 'none' : 'translateY(-1px)')};
+    box-shadow: ${(props) =>
+      props.disabled ? 'none' : '0 8px 14px rgba(47, 30, 18, 0.24)'};
+  }
+
+  @media (max-width: 700px) {
+    margin-left: 0;
+    padding: 9px 12px;
+    min-width: 74px;
   }
 `;
 
 const LoadingIndicator = styled.div`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   margin: 8px 0;
-  
+  color: #654730;
+  font-weight: 600;
+  font-size: 0.92rem;
+
   &::after {
-    content: "...";
+    content: '...';
     animation: dots 1.5s infinite;
-    font-weight: bold;
+    font-weight: 700;
+    min-width: 18px;
   }
-  
+
   @keyframes dots {
-    0%, 20% {
-      content: ".";
+    0%,
+    20% {
+      content: '.';
     }
     40% {
-      content: "..";
+      content: '..';
     }
-    60%, 100% {
-      content: "...";
+    60%,
+    100% {
+      content: '...';
     }
   }
 `;
@@ -157,4 +217,4 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({ messages, onSendM
   );
 };
 
-export default ConversationPanel; 
+export default ConversationPanel;

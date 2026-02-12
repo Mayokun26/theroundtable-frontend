@@ -65,7 +65,7 @@ export default function SignUp() {
               Check Your Email
             </Typography>
             <Typography sx={{ mt: 2, textAlign: 'center' }}>
-              We've sent a confirmation code to your email address. Please check your inbox and enter the code to complete your registration.
+              We&apos;ve sent a confirmation code to your email address. Please check your inbox and enter the code to complete your registration.
             </Typography>
             <Button
               component={Link}
