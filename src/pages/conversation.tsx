@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Avatar,
   AppBar,
   Box,
   Button,
-  Card,
-  CardContent,
   Checkbox,
   Chip,
   CircularProgress,
@@ -115,6 +114,7 @@ const ConversationPage = () => {
   ]);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [lambdaWarmedUp, setLambdaWarmedUp] = useState(false);
+  const availableCharacters = characters.length > 0 ? characters : fallbackCharacters;
 
   useEffect(() => {
     const warmupFunction = async () => {
@@ -410,10 +410,20 @@ const ConversationPage = () => {
                   pr: { xs: 0, md: 0.4 },
                 }}
               >
-                {characters.map((character, index) => (
-                  <Card
+                {availableCharacters.map((character, index) => (
+                  <Box
                     key={character.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => !panelConfirmed && handleCharacterSelect(character.id)}
+                    onKeyDown={(event) => {
+                      if (!panelConfirmed && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault();
+                        handleCharacterSelect(character.id);
+                      }
+                    }}
                     sx={{
+                      cursor: panelConfirmed ? 'default' : 'pointer',
                       border: selectedCharacters.includes(character.id)
                         ? '2px solid rgba(111, 68, 39, 0.8)'
                         : '1px solid rgba(111, 68, 39, 0.18)',
@@ -427,45 +437,46 @@ const ConversationPage = () => {
                         transform: 'translateY(-3px)',
                         boxShadow: '0 8px 18px rgba(51, 35, 23, 0.16)',
                       },
+                      borderRadius: 2,
+                      px: { xs: 1.2, md: 1.4 },
+                      py: { xs: 1, md: 1.2 },
                     }}
                   >
-                    <CardContent sx={{ p: { xs: 1.35, md: 1.6 }, '&:last-child': { pb: { xs: 1.35, md: 1.6 } } }}>
-                      <Box display="flex" alignItems="center">
-                        <Box
-                          component="img"
-                          src={character.imageUrl || '/images/placeholder.jpg'}
-                          alt={character.name}
-                          sx={{
-                            width: { xs: 50, md: 56 },
-                            height: { xs: 50, md: 56 },
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            mr: 1.3,
-                            border: '2px solid rgba(111, 68, 39, 0.25)',
-                          }}
-                          onError={(e) => {
+                    <Box display="flex" alignItems="center">
+                      <Avatar
+                        src={character.imageUrl || '/images/placeholder.jpg'}
+                        alt={character.name}
+                        imgProps={{
+                          onError: (e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = '/images/placeholder.jpg';
-                          }}
-                        />
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="h6" component="div" sx={{ fontSize: { xs: '0.95rem', md: '1rem' }, lineHeight: 1.05 }}>
-                            {character.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.2 }}>
-                            {character.era} | {character.category}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ ml: 'auto' }}>
-                          <Checkbox
-                            checked={selectedCharacters.includes(character.id)}
-                            onChange={() => handleCharacterSelect(character.id)}
-                            disabled={panelConfirmed}
-                          />
-                        </Box>
+                          },
+                        }}
+                        sx={{
+                          width: { xs: 50, md: 56 },
+                          height: { xs: 50, md: 56 },
+                          mr: 1.3,
+                          border: '2px solid rgba(111, 68, 39, 0.25)',
+                        }}
+                      />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="h6" component="div" sx={{ fontSize: { xs: '0.95rem', md: '1rem' }, lineHeight: 1.05 }}>
+                          {character.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.2 }}>
+                          {character.era} | {character.category}
+                        </Typography>
                       </Box>
-                    </CardContent>
-                  </Card>
+                      <Box sx={{ ml: 'auto' }}>
+                        <Checkbox
+                          checked={selectedCharacters.includes(character.id)}
+                          onChange={() => handleCharacterSelect(character.id)}
+                          onClick={(event) => event.stopPropagation()}
+                          disabled={panelConfirmed}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
                 ))}
               </Stack>
             </Box>
