@@ -66,6 +66,13 @@ interface Message {
   timestamp: string;
 }
 
+interface ApiConversationResponse {
+  id: string;
+  name: string;
+  content: string;
+  timestamp: string;
+}
+
 const fallbackCharacters: Character[] = [
   {
     id: '1',
@@ -236,7 +243,7 @@ const ConversationPage = () => {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`, {
         method: 'POST',
@@ -265,25 +272,40 @@ const ConversationPage = () => {
       }
 
       const data = await response.json();
-      const responses = Array.isArray(data.responses)
+      const responsesRaw = Array.isArray(data.responses)
         ? data.responses
         : Array.isArray(data.data?.responses)
           ? data.data.responses
           : [];
+
+      const responses: ApiConversationResponse[] = responsesRaw
+        .map((resp: Record<string, unknown>) => ({
+          id: (typeof resp.characterId === 'string' && resp.characterId) || (typeof resp.id === 'string' && resp.id) || `character-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          name:
+            (typeof resp.name === 'string' && resp.name) ||
+            (typeof resp.characterName === 'string' && resp.characterName) ||
+            'Panelist',
+          content:
+            (typeof resp.content === 'string' && resp.content.trim()) ||
+            (typeof resp.message === 'string' && resp.message.trim()) ||
+            '',
+          timestamp: typeof resp.timestamp === 'string' ? resp.timestamp : new Date().toISOString(),
+        }))
+        .filter((resp: ApiConversationResponse) => resp.content.length > 0);
 
       if (responses.length > 0) {
         setTimeout(() => {
           const addResponses = async () => {
             for (const resp of responses) {
               const characterResponse: Message = {
-                id: resp.id || `character-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                id: resp.id,
                 content: resp.content,
                 sender: 'character',
                 character: {
-                  id: resp.characterId,
+                  id: resp.id,
                   name: resp.name,
                 },
-                timestamp: resp.timestamp || new Date().toISOString(),
+                timestamp: resp.timestamp,
               };
 
               setMessages((prev) => [...prev, characterResponse]);
@@ -295,21 +317,14 @@ const ConversationPage = () => {
           addResponses();
         }, 1000);
       } else {
-        throw new Error('No responses received from API');
+        const backendMessage = typeof data.message === 'string' ? data.message : '';
+        throw new Error(backendMessage || 'No responses received from API');
       }
     } catch (err) {
       console.error('Error sending message:', err);
       setSendingMessage(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `system-error-${Date.now()}`,
-          content: 'Sorry, there was an error getting responses from the panel. Please try again.',
-          sender: 'character',
-          character: { id: 'system', name: 'System' },
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      const fallbackMessage = 'Unable to reach the conversation service right now. Please try again.';
+      setError(err instanceof Error && err.message ? err.message : fallbackMessage);
     }
   };
 
