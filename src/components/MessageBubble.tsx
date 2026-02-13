@@ -106,7 +106,7 @@ const MessageBubbleComponent: React.FC<MessageProps> = ({ id, content, sender, c
         window.clearInterval(intervalId);
         typedMessageIds.add(id);
       }
-    }, 18);
+    }, 27);
 
     return () => window.clearInterval(intervalId);
   }, [content, id, shouldAnimate]);
