@@ -190,6 +190,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({ messages, onSendM
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
+            id={message.id}
             content={message.content}
             sender={message.sender}
             character={message.character}

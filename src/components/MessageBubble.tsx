@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 interface MessageProps {
+  id: string;
   content: string;
   sender: 'user' | 'character';
   character?: {
@@ -67,9 +68,16 @@ const MessageTime = styled.div`
   align-self: flex-end;
 `;
 
-const MessageBubbleComponent: React.FC<MessageProps> = ({ content, sender, character, timestamp }) => {
+const typedMessageIds = new Set<string>();
+
+const MessageBubbleComponent: React.FC<MessageProps> = ({ id, content, sender, character, timestamp }) => {
   const isUser = sender === 'user';
   const senderName = isUser ? 'You' : character?.name || 'Unknown';
+  const shouldAnimate = useMemo(
+    () => sender === 'character' && content.length > 0 && !typedMessageIds.has(id),
+    [content.length, id, sender],
+  );
+  const [visibleContent, setVisibleContent] = useState(shouldAnimate ? '' : content);
 
   const formatTime = (isoString: string) => {
     try {
@@ -80,10 +88,33 @@ const MessageBubbleComponent: React.FC<MessageProps> = ({ content, sender, chara
     }
   };
 
+  useEffect(() => {
+    if (!shouldAnimate) {
+      setVisibleContent(content);
+      return;
+    }
+
+    setVisibleContent('');
+    const totalLength = content.length;
+    const step = Math.max(1, Math.ceil(totalLength / 48));
+    let cursor = 0;
+
+    const intervalId = window.setInterval(() => {
+      cursor = Math.min(totalLength, cursor + step);
+      setVisibleContent(content.slice(0, cursor));
+      if (cursor >= totalLength) {
+        window.clearInterval(intervalId);
+        typedMessageIds.add(id);
+      }
+    }, 18);
+
+    return () => window.clearInterval(intervalId);
+  }, [content, id, shouldAnimate]);
+
   return (
     <MessageContainer $isUser={isUser}>
       <MessageSender $isUser={isUser}>{senderName}</MessageSender>
-      <MessageBubble $isUser={isUser}>{content}</MessageBubble>
+      <MessageBubble $isUser={isUser}>{visibleContent}</MessageBubble>
       <MessageTime>{formatTime(timestamp)}</MessageTime>
     </MessageContainer>
   );
