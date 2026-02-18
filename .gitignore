@@ -126,3 +126,6 @@ coverage/
 !.yarn/versions
 .pnp.*
 yarn-error.log
+# Local agent artifacts
+CLAUDE.md
+*.bak
