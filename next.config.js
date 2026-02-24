@@ -14,8 +14,8 @@ const nextConfig = {
   // Clean the output directory before building
   cleanDistDir: true,
   env: {
-    API_URL: process.env.API_URL || 'https://pv72dt90k2.execute-api.us-east-1.amazonaws.com/dev',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.theroundtableai.com'
+    API_URL: process.env.API_URL || 'https://1h33h387kc.execute-api.us-east-1.amazonaws.com/dev',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://1h33h387kc.execute-api.us-east-1.amazonaws.com/dev'
   }
 };
 
