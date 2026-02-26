@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import axios from 'axios';
-import { Box, Button, CircularProgress, Container, Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Container, Link, Stack, Typography } from '@mui/material';
 import { keyframes } from '@mui/system';
 import CharacterGrid from '../components/CharacterGrid';
 
@@ -227,6 +227,24 @@ export default function Home() {
             <CharacterGrid characters={characters} />
           </>
         )}
+
+        <Box
+          component="footer"
+          sx={{
+            mt: { xs: 3, md: 5 },
+            pt: 2,
+            pb: 1,
+            borderTop: '1px solid rgba(112, 74, 43, 0.15)',
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>
+            Your conversations are processed by OpenAI.{' '}
+            <Link href="/legal/privacy-policy.html" target="_blank" rel="noopener noreferrer" color="primary">
+              Privacy Policy
+            </Link>
+          </Typography>
+        </Box>
       </Container>
     </>
   );
