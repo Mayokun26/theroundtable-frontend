@@ -12,9 +12,8 @@ The frontend application for TheRoundTable, built with Next.js and TypeScript. T
 
 ## 📋 Prerequisites
 
-- Node.js 14+
-- npm or yarn
-- AWS Account (for authentication)
+- Node.js 22+ (`@capacitor/cli` 8 requires it)
+- npm
 
 ## 🔧 Installation & Setup
 
@@ -23,13 +22,11 @@ The frontend application for TheRoundTable, built with Next.js and TypeScript. T
 npm install
 ```
 
-2. Create a `.env.local` file with the following variables:
+2. Optional: to use your own backend, create `.env.local`:
 ```
-NEXT_PUBLIC_API_URL=your-backend-api-url
-NEXT_PUBLIC_AWS_REGION=your-aws-region
-NEXT_PUBLIC_USER_POOL_ID=your-cognito-user-pool-id
-NEXT_PUBLIC_USER_POOL_CLIENT_ID=your-cognito-client-id
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
+Without it, the app talks to the hosted dev API set in `next.config.js`.
 
 3. Run the development server:
 ```bash
@@ -72,10 +69,9 @@ npm run dev
 
 ## ⚙️ Configuration
 
-- Default backend API port: 5000
-- WebSocket connections for real-time chat
-- AWS Cognito integration for authentication
-- Environment variables for sensitive configuration
+- `NEXT_PUBLIC_API_URL` is the only setting you need; unset, it falls back to the hosted dev API
+- A local backend listens on port 3001 and serves its routes under `/api`
+- `npm run build` writes a static export to `out/`, which Capacitor packages for iOS
 
 ## 🔒 Security Features
 
@@ -105,5 +101,5 @@ The application can be deployed to:
 
 - Ensure the backend API is running before starting the frontend
 - Configure all environment variables before building
-- Use Node.js version 14 or higher
+- Use Node.js 22 or higher
 - Keep dependencies updated regularly
