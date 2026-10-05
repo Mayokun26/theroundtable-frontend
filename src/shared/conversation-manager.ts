@@ -161,6 +161,9 @@ export function generateCharacterSystemPrompt(character: Character): string {
     Keep responses concise (2-3 paragraphs maximum).`;
 }
 
+// Older chat models reject reasoning_effort, so it is only sent to newer ones
+const LEGACY_CHAT_MODEL = /^(gpt-3\.5|gpt-4o|gpt-4\.1|gpt-4-|gpt-4$|chatgpt-4o)/;
+
 /**
  * Format AI response parameters for API calls
  * @param userMessage - User's message 
@@ -185,7 +188,7 @@ export function formatAIRequestParams(
       { role: "system", content: generateCharacterSystemPrompt(character) },
       { role: "user", content: userMessage }
     ],
-    reasoning_effort: "none",
+    ...(LEGACY_CHAT_MODEL.test(model) ? {} : { reasoning_effort: "none" }),
     temperature,
     max_completion_tokens: maxTokens
   };
