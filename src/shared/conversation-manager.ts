@@ -174,7 +174,7 @@ export function formatAIRequestParams(
   options: AIRequestOptions = {}
 ): Record<string, any> {
   const {
-    model = "gpt-3.5-turbo",
+    model = "gpt-6-luna",
     temperature = 0.7,
     maxTokens = 200
   } = options;
@@ -185,8 +185,9 @@ export function formatAIRequestParams(
       { role: "system", content: generateCharacterSystemPrompt(character) },
       { role: "user", content: userMessage }
     ],
+    reasoning_effort: "none",
     temperature,
-    max_tokens: maxTokens
+    max_completion_tokens: maxTokens
   };
 }
 
